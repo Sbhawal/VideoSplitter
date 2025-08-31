@@ -187,3 +187,12 @@ print("\n\n ====================================================================
 print(f"Total size before encoding: {TOTAL_SIZE_BEFORE_ENCODING / (1024 * 1024 * 1024):.2f} GB")
 print(f"Total size after encoding: {TOTAL_SIZE_AFTER_ENCODING / (1024 * 1024 * 1024):.2f} GB")
 print(f"Total size of deleted files: {DELETED_FILE_SIZE / (1024 * 1024 * 1024):.2f} GB")
+
+try:
+    shutil.rmtree(delete_dir)
+    shutil.rmtree(error_dir)
+    shutil.rmtree(hash_error_dir)
+    print("Temporary directories removed.")
+except Exception as e:
+    print(f"Error removing temporary directories: {e}")
+    

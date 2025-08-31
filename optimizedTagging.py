@@ -11,6 +11,7 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 
+from src.processData import *
 from src.Models import VisionModel
 
 warnings.filterwarnings(
@@ -20,13 +21,12 @@ warnings.filterwarnings(
 )
 
 # ==== Config ====
-SCENE_DETAILS_TSV = r"Z:\Projects\VideoSplitter\HDD\Scenes\scene_details.tsv"
 SCENE_FOLDER = r"Z:\Projects\VideoSplitter\HDD\Scenes\1080p"
 TEMP_DIR = r"R:\Temp"
 MODEL_PATH = 'model'
 THRESHOLD = 0.3
 SAVE_INTERVAL = 100        # Save TSV every N videos
-MAX_WORKERS = 1        # Number of threads to use for per-video processing (IO + preprocessing)
+MAX_WORKERS = 4        # Number of threads to use for per-video processing (IO + preprocessing)
 SAMPLING_FPS = 2           # frames/second to sample from each video (videos max 10s so small)
 BATCH_SIZE = 32            # GPU batch for model forward
 
@@ -45,12 +45,9 @@ model.to(device)
 # Keep image size in local variable
 IMAGE_SIZE = getattr(model, 'image_size', 224)
 
-# Load processed list if exists
-if os.path.exists(SCENE_DETAILS_TSV):
-    df = pd.read_csv(SCENE_DETAILS_TSV, sep='\t')
-    ProcessedVideos = set(df['name'].tolist())
-else:
-    df = pd.DataFrame(columns=['name', 'scores'])
+df = read_complete_df()
+ProcessedVideos = set(df['name'].tolist())
+df = pd.DataFrame(columns=['name', 'scores'])
 
 # Load tag list
 with open(Path(MODEL_PATH) / 'top_tags.txt', 'r') as f:
@@ -161,6 +158,7 @@ def getScoreForAllFrames(filepath, sampling_fps=SAMPLING_FPS, batch_size=BATCH_S
         try:
             probs = batch_predict(batch_tensors)  # numpy (B, num_tags)
         except Exception as e:
+            print("1")
             # if model forward fails, free GPU memory and raise
             torch.cuda.empty_cache()
             raise
@@ -182,7 +180,7 @@ def getScoreForAllFrames(filepath, sampling_fps=SAMPLING_FPS, batch_size=BATCH_S
 # ==== Worker ====
 def process_video(video):
     # quick check + reserve
-    print(video)
+    # print(video)
     with df_lock:
         if video in ProcessedVideos:
             return None
@@ -192,6 +190,7 @@ def process_video(video):
     try:
         scores = getScoreForAllFrames(filepath, sampling_fps=SAMPLING_FPS, batch_size=BATCH_SIZE)
     except Exception as e:
+        print("2")
         # remove from processed so it can be retried later
         with df_lock:
             ProcessedVideos.discard(video)
@@ -200,7 +199,10 @@ def process_video(video):
     with df_lock:
         df.loc[len(df)] = {'name': video, 'scores': json.dumps(scores)}
         if len(ProcessedVideos) % SAVE_INTERVAL == 0:
-            df.to_csv(SCENE_DETAILS_TSV, sep='\t', index=False)
+            # df.to_csv(, sep='\t', index=False)
+            # Save last 10 appended rows to a separate file
+            last10_df = df.tail(SAVE_INTERVAL)
+            save_new_temp_df(last10_df)
     return None
 
 # ==== Main ====
@@ -226,7 +228,9 @@ def generateVideoScoreDataset():
 
     # Final save
     with df_lock:
-        df.to_csv(SCENE_DETAILS_TSV, sep='\t', index=False)
+        last10_df = df.tail(SAVE_INTERVAL)
+        save_new_temp_df(last10_df)
 
 if __name__ == "__main__":
     generateVideoScoreDataset()
+    split_and_save_df_chunks()

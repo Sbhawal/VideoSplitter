@@ -39,6 +39,7 @@ def split_video_with_gpu(input_path, output_dir):
     duration = get_video_duration(input_path)
     if duration is None:
         os.rename(input_path, os.path.join(delete_dir, filename))  # Move to DELETE directory
+        os.remove(os.path.join(delete_dir, filename))
         return
 
     total_parts = int(duration // 10) + (1 if duration % 10 else 0)
@@ -98,6 +99,7 @@ def split_video_with_gpu(input_path, output_dir):
     if os.path.exists(input_path):
         FILE_SIZE = os.path.getsize(input_path)
         os.rename(input_path, os.path.join(delete_dir, filename))
+        os.remove(os.path.join(delete_dir, filename))
         TOTAL_SIZE_BEFORE_ENCODING += FILE_SIZE
 
 
@@ -110,14 +112,17 @@ def process_video(file, source_dir, delete_dir, chunks_dir):
     if duration is None:
         try:
             os.rename(full_path, os.path.join(delete_dir, file))  # Move to DELETE directory
+            os.remove(os.path.join(delete_dir, file))
         except FileExistsError:
             shutil.move(full_path, os.path.join(delete_dir, file))
+            os.remove(os.path.join(delete_dir, file))
         return
 
     if duration < 3:
         FILE_SIZE = os.path.getsize(full_path)
         DELETED_FILE_SIZE += FILE_SIZE
         shutil.move(full_path, os.path.join(delete_dir, file))
+        os.remove(os.path.join(delete_dir, file))
     elif duration > 10:
         FILE_SIZE = os.path.getsize(full_path)
         TOTAL_SIZE_BEFORE_ENCODING += FILE_SIZE
@@ -179,6 +184,6 @@ print("\nProcessing complete.")
 
 print("\n\n ===================================================================================== \n\n")
 
-print(f"Total size before encoding: {TOTAL_SIZE_BEFORE_ENCODING / (1024 * 1024):.2f} MB")
-print(f"Total size after encoding: {TOTAL_SIZE_AFTER_ENCODING / (1024 * 1024):.2f} MB")
-print(f"Total size of deleted files: {DELETED_FILE_SIZE / (1024 * 1024):.2f} MB")
+print(f"Total size before encoding: {TOTAL_SIZE_BEFORE_ENCODING / (1024 * 1024 * 1024):.2f} GB")
+print(f"Total size after encoding: {TOTAL_SIZE_AFTER_ENCODING / (1024 * 1024 * 1024):.2f} GB")
+print(f"Total size of deleted files: {DELETED_FILE_SIZE / (1024 * 1024 * 1024):.2f} GB")

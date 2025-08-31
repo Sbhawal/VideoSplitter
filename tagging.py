@@ -21,7 +21,7 @@ warnings.filterwarnings(
 )
 
 # ==== Config ====
-SCENE_DETAILS_TSV = r"Z:\Projects\VideoSplitter\HDD\Scenes\scene_details.tsv"
+SCENE_DETAILS_TSV = r"Z:\Projects\VideoSplitter\src\scene_details.tsv"
 SCENE_FOLDER = r"Z:\Projects\VideoSplitter\HDD\Scenes\1080p"
 TEMP_DIR = r"R:\Temp"
 path = 'model'

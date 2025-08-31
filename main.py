@@ -4,6 +4,7 @@ import os, time
 from scenedetect import VideoManager, SceneManager
 from scenedetect.detectors import ContentDetector
 import pandas as pd
+import shutil
 import subprocess
 from tqdm import tqdm
 from multiprocessing import Process
@@ -67,9 +68,14 @@ def detect_scene_cuts(video_path, csv_output_path):
 
 
 
-def split_video_with_gpu(video_path, csv_path, _unused_output_dir=None):
-    import shutil
+import random
+import string
 
+def random_string(length=32):
+    """Generate a random lowercase alphanumeric string."""
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
+
+def split_video_with_gpu(video_path, csv_path, _unused_output_dir=None):
     # Read scene cut ranges
     df = pd.read_csv(csv_path)
     if len(df) == 0:
@@ -87,6 +93,10 @@ def split_video_with_gpu(video_path, csv_path, _unused_output_dir=None):
     resolution = get_video_resolution(video_path)
     if not resolution:
         print(f"Could not detect resolution for {video_path}. Skipping.")
+        return
+    
+    if resolution != "1920x1080":
+        print(f"Warning: Detected resolution {resolution} for {video_path}, expected 1920x1080... Skipping !!")
         return
 
     resolution_map = {
@@ -106,7 +116,11 @@ def split_video_with_gpu(video_path, csv_path, _unused_output_dir=None):
 
     for i, (start, end) in enumerate(zip(start_seconds, end_seconds), start=1):
         duration = end - start
-        output_file = os.path.join(resolution_dir, f"{base_filename}_split_{i:03d}.mp4").replace(" ","_")
+        
+        # Generate random 32-char prefix for this split
+        prefix = random_string(32)
+        output_name = f"{base_filename}_split_{i:03d}_{prefix}.mp4".replace(" ","_")
+        output_file = os.path.join(resolution_dir, output_name)
 
         cmd = [
             ffmpeg_path,
@@ -128,9 +142,8 @@ def split_video_with_gpu(video_path, csv_path, _unused_output_dir=None):
         else:
             # print(f"[OK] Created {output_file}")
             pass
+
     print(f"All splits saved for {video_path} in {resolution_dir}")
-
-
 
 
 
@@ -186,6 +199,10 @@ def splitSingleVideo():
             os.remove(csv)  # Remove CSV after processing
             os.remove(video_file)  # Remove original video after splitting
         except Exception as e:
+            dest_path = os.path.join("NO_SPLITS", os.path.basename(video_file))
+            os.rename(video_file, dest_path)
+            print(f"No splits found for {video_file}. Moved to NO_SPLITS.")
+            os.remove(csv)  # Remove CSV after processing
             print(f"Error processing {csv}: {e}")
             continue
         print_seperator()
@@ -205,7 +222,7 @@ def startSplits():
 
 
 if __name__ == '__main__':
-    INPUT_DIR = r"E:\BLOB\Materials\Studios\Vixen"
+    INPUT_DIR = r"Z:\Projects\VideoSplitter\HDD\Scenes\temp"
     if INPUT_DIR:
         os.chdir(INPUT_DIR)
     else:

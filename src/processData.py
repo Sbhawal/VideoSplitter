@@ -4,7 +4,7 @@ import secrets
 
 
 SCENE_DETAILS_FOLDER = r"Z:\Projects\VideoSplitter\data"
-chunksize = 10000
+chunksize = 5000
 
 TSV_FILES = []
 
@@ -60,5 +60,7 @@ def split_and_save_df_chunks(chunk_size=chunksize):
     for file in TSV_FILES:
         if len(os.path.basename(file)) == 36:
             os.remove(file)
+        elif "chunk" not in os.path.basename(file):
+            print(f"Skipping removal of {file} with length {len(os.path.basename(file))}")
 
 refresh_TSV_list()

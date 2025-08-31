@@ -95,9 +95,9 @@ def split_video_with_gpu(video_path, csv_path, _unused_output_dir=None):
         print(f"Could not detect resolution for {video_path}. Skipping.")
         return
     
-    if resolution != "1920x1080":
-        print(f"Warning: Detected resolution {resolution} for {video_path}, expected 1920x1080... Skipping !!")
-        return
+    # if resolution == "1920x1080":
+    #     print(f"Warning: Detected resolution {resolution} for {video_path}, expected 1920x1080... Skipping !!")
+    #     return
 
     resolution_map = {
         "1920x1080": "1080p",
@@ -173,8 +173,7 @@ def startDetection():
             os.rename(file, os.path.join("ERRORS", file))  # Move errored file to ERRORS
             continue
 
-    print("\nAll scene cuts detected and saved to CSV files.\n")
-
+    
 def splitSingleVideo():
     csv_files = [x for x in os.listdir() if x.endswith('_cuts.csv')]
     if len(csv_files) == 0:
@@ -243,3 +242,4 @@ if __name__ == '__main__':
     p2.join()
 
     print("\nDetection and Splitting finished in parallel.\n")
+    print("\nAll scene cuts detected and saved to CSV files.\n")

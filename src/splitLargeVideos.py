@@ -103,6 +103,29 @@ def split_video_with_gpu(input_path, output_dir):
         TOTAL_SIZE_BEFORE_ENCODING += FILE_SIZE
 
 
+def get_playtime(videopath):
+    try:
+        with VideoFileClip(videopath) as clip:
+            return clip.duration
+    except Exception as e:
+        print(f"Error getting playtime for {videopath}: {e}")
+        return None
+
+
+def checkShortClips():
+    def process_clip(i):
+        i = os.path.join(input_dir, i)
+        if i.endswith('.mp4'):
+            playtime = get_playtime(i)
+            if playtime is None:
+                os.remove(i)
+            elif playtime < 2:
+                os.remove(i)
+
+    files = [f for f in os.listdir(input_dir) if f.endswith('.mp4')]
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        list(tqdm(executor.map(process_clip, files), total=len(files), desc="Checking short clips"))
+
 def process_video(file, source_dir, delete_dir, chunks_dir):
     global TOTAL_SIZE_BEFORE_ENCODING, TOTAL_SIZE_AFTER_ENCODING,DELETED_FILE_SIZE
     chunks_dir = source_dir
@@ -167,6 +190,9 @@ def split_large_videos(source_dir, max_workers=4):
             except Exception as e:
                 pass
                 print(f"Worker failed: {e}")
+        
+
+
 
 
 # if __name__ == "__main__":
@@ -188,6 +214,9 @@ print(f"Total size before encoding: {TOTAL_SIZE_BEFORE_ENCODING / (1024 * 1024 *
 print(f"Total size after encoding: {TOTAL_SIZE_AFTER_ENCODING / (1024 * 1024 * 1024):.2f} GB")
 print(f"Total size of deleted files: {DELETED_FILE_SIZE / (1024 * 1024 * 1024):.2f} GB")
 
+# Call checkShortClips at the end
+checkShortClips()
+
 try:
     shutil.rmtree(delete_dir)
     shutil.rmtree(error_dir)
@@ -195,4 +224,5 @@ try:
     print("Temporary directories removed.")
 except Exception as e:
     print(f"Error removing temporary directories: {e}")
-    
+except Exception as e:
+    print(f"Error removing temporary directories: {e}")

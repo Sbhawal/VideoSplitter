@@ -201,8 +201,8 @@ def process_video(video):
         if len(ProcessedVideos) % SAVE_INTERVAL == 0:
             # df.to_csv(, sep='\t', index=False)
             # Save last 10 appended rows to a separate file
-            last10_df = df.tail(SAVE_INTERVAL)
-            save_new_temp_df(last10_df)
+            last_INTERVAL_df = df.tail(SAVE_INTERVAL)
+            save_new_temp_df(last_INTERVAL_df)
     return None
 
 # ==== Main ====
@@ -228,8 +228,8 @@ def generateVideoScoreDataset():
 
     # Final save
     with df_lock:
-        last10_df = df.tail(SAVE_INTERVAL)
-        save_new_temp_df(last10_df)
+        last_INTERVAL_df = df.tail(SAVE_INTERVAL)
+        save_new_temp_df(last_INTERVAL_df)
 
 if __name__ == "__main__":
     generateVideoScoreDataset()

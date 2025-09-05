@@ -199,7 +199,10 @@ def splitSingleVideo():
             os.remove(video_file)  # Remove original video after splitting
         except Exception as e:
             dest_path = os.path.join("NO_SPLITS", os.path.basename(video_file))
-            os.rename(video_file, dest_path)
+            try:
+                os.rename(video_file, dest_path)
+            except FileExistsError:
+                os.remove(video_file)  # If already exists in NO_SPLITS, just remove
             print(f"No splits found for {video_file}. Moved to NO_SPLITS.")
             os.remove(csv)  # Remove CSV after processing
             print(f"Error processing {csv}: {e}")

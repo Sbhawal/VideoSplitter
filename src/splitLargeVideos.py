@@ -111,17 +111,19 @@ def get_playtime(videopath):
         print(f"Error getting playtime for {videopath}: {e}")
         return None
 
+def process_clip(i):
+    i = os.path.join(input_dir, i)
+    filesize = os.path.getsize(i)
+    if filesize > 3 * 1024 * 1024:  # Greater than 3MB
+        return
+    if i.endswith('.mp4'):
+        playtime = get_playtime(i)
+        if playtime is None:
+            os.remove(i)
+        elif playtime < 2:
+            os.remove(i)
 
 def checkShortClips():
-    def process_clip(i):
-        i = os.path.join(input_dir, i)
-        if i.endswith('.mp4'):
-            playtime = get_playtime(i)
-            if playtime is None:
-                os.remove(i)
-            elif playtime < 2:
-                os.remove(i)
-
     files = [f for f in os.listdir(input_dir) if f.endswith('.mp4')]
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         list(tqdm(executor.map(process_clip, files), total=len(files), desc="Checking short clips"))

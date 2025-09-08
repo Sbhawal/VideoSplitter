@@ -232,5 +232,8 @@ def generateVideoScoreDataset():
         save_new_temp_df(last_INTERVAL_df)
 
 if __name__ == "__main__":
+    import time
+    split_and_save_df_chunks()
+    time.sleep(5)  # wait for file system to settle
     generateVideoScoreDataset()
     split_and_save_df_chunks()

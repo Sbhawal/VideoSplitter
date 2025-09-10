@@ -233,7 +233,9 @@ def generateVideoScoreDataset():
 
 if __name__ == "__main__":
     import time
-    split_and_save_df_chunks()
-    time.sleep(5)  # wait for file system to settle
+    print(" ----------------------------------------------------------------------")
+    print("Starting optimized tagging process ...")
     generateVideoScoreDataset()
+    print("Optimized tagging process completed.")
+    print("Final split and save ...")
     split_and_save_df_chunks()

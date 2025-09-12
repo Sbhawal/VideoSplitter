@@ -127,12 +127,21 @@ def getScoreForAllFrames(filepath, sampling_fps=SAMPLING_FPS, batch_size=BATCH_S
     tensors_cpu = []
     frame_indices = []
 
+    # skip first and last 5 frames
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    skip_start = 5
+    skip_end = 5
+
     idx = 0
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        if idx % frame_interval == 0:
+        if (
+            idx % frame_interval == 0
+            and idx >= skip_start
+            and (frame_count <= 0 or idx < frame_count - skip_end)
+        ):
             # convert BGR (cv2) to RGB
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pil = Image.fromarray(rgb)
